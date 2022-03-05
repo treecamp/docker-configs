@@ -1,0 +1,33 @@
+version: '2'
+
+services:
+  kerberos:
+    image: kerberos/kerberos:latest
+    container_name: kerberos
+    restart: unless-stopped
+    volumes:
+      - ./config:/etc/opt/kerberosio/config
+      - ./capture:/etc/opt/kerberosio/capture
+      - ./logs:/etc/opt/kerberosio/logs
+      - ./webconfig:/var/www/web/config
+    # To access on ip
+    ports:
+      - "34:80"
+      - "8889:8889"
+    expose:
+      - "8889"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kerberos.rule=Host(\"kerberos.dynadex.dev\")"
+      - "traefik.http.routers.kerberos.tls=true"
+      - "traefik.http.services.kerberos.loadbalancer.server.port=8889"
+
+networks:
+  web:
+    external: true
