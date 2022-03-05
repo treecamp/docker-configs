@@ -1,0 +1,20 @@
+version: "2"
+
+services:
+  plex:
+    container_name: plex
+    image: plexinc/pms-docker:latest
+    network_mode: host
+    restart: always
+    volumes:
+      - /home/coen/docker/plex/config:/config
+      - /home/coen/docker/plex/transcode:/transcode
+      - /home/coen/nas/media/films:/films
+      - /home/coen/nas/media/series:/series
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - TZ=Europe/Amsterdam
+      - ADVERTISE_IP="http://plex.dynadex.dev:32400/"
+      - PLEX_CLAIM="claim-idK_QRfxt8xoQUM4xvKD"
