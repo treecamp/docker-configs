@@ -1,0 +1,42 @@
+log:
+  level: ERROR
+
+entryPoints:
+  http:
+    address: ":80"
+
+  https:
+    address: ":443"
+
+  traefik:
+    address: ":8080"
+
+api:
+  insecure: true
+  dashboard: true
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    watch: true
+  file:
+    directory: /rules
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "coen@dynadex.nl"
+      storage: "acme.json"
+      dnsChallenge:
+        provider: transip
+        delayBeforeCheck: 0
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
+
+#For Unifi
+serversTransport:
+  insecureSkipVerify: true
+

@@ -1,0 +1,17 @@
+http:
+  routers:
+    nas:
+      entryPoints:
+        - https
+      service: nas
+      rule: Host("nas.dynadex.dev")
+      middlewares:
+        - "hsts"
+      tls: {}
+
+  services:
+    nas:
+      loadBalancer:
+        servers:
+          - url: http://192.168.2.1:5000
+        passHostHeader: true
