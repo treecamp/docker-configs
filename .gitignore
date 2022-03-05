@@ -1,0 +1,7 @@
+!*/docker-compose.yml*
+!.gitignore
+*/**/*.key
+*/**/*.env
+*/*/**
+#Traefik
+!traefik/rules/*
