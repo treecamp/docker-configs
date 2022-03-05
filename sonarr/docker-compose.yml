@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    restart: unless-stopped
+    volumes:
+      - /home/coen/docker/sonarr/config:/config
+      - /home/coen/nas/media/downloads:/downloads
+      - /home/coen/nas/media/series:/series
+    # To access on ip
+    ports:
+      - "8989:8989"
+    expose:
+      - "8989"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(\"sonarr.dynadex.dev\")"
+      - "traefik.http.routers.sonarr.tls=true"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+
+networks:
+  web:
+    external: true
