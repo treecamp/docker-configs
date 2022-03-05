@@ -1,0 +1,73 @@
+version: '3.7'
+
+services:
+  db:
+    image: mariadb:latest
+    container_name: nextcloud_db
+    volumes:
+      - ${DOCKER_DIR}/nextcloud/data-db:/var/lib/mysql
+    networks:
+      - default
+    restart: unless-stopped
+    environment:
+      TZ: TZ=Europe/Amsterdam
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  redis:
+    image: redis:latest
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      - ${DOCKER_DIR}/nextcloud/data-redis:/var/lib/redis
+
+  nextcloud:
+    depends_on:
+      - redis
+      - db
+    image: nextcloud:latest
+    container_name: nextcloud
+    volumes:
+      - ${DOCKER_DIR}/nextcloud/data:/var/www/html
+    networks:
+      - web
+      - default
+    ports: 
+      - 2237:80
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.nextcloud.loadbalancer.server.port=80
+      - traefik.http.routers.nextcloud.middlewares=nextcloud,nextcloud_redirect
+      - traefik.http.routers.nextcloud.tls=true
+        #- traefik.http.routers.nextcloud.tls.certresolver=lets-encrypt
+      - traefik.http.routers.nextcloud.rule=Host(`${URL}`)
+      - traefik.http.middlewares.nextcloud.headers.customFrameOptionsValue=ALLOW-FROM https://dynadex.dev
+      - traefik.http.middlewares.nextcloud.headers.contentSecurityPolicy=frame-ancestors 'self' dynadex.dev *.dynadex.dev
+      - traefik.http.middlewares.nextcloud.headers.stsSeconds=155520011
+      - traefik.http.middlewares.nextcloud.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.nextcloud.headers.stsPreload=true
+      - traefik.http.middlewares.nextcloud.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN
+      - traefik.http.middlewares.nextcloud_redirect.redirectregex.permanent=true
+      - traefik.http.middlewares.nextcloud_redirect.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav
+      - traefik.http.middlewares.nextcloud_redirect.redirectregex.replacement=https://$${1}/remote.php/dav/
+    environment:
+      REDIS_HOST: redis
+      MYSQL_HOST: db:3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TRUSTED_PROXIES: 172.22.0.1 
+
+networks:
+  web:
+    external: true
+
+volumes:
+  data:
+  data-db:
+  data-redis:

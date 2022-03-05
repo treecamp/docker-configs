@@ -1,0 +1,63 @@
+version: '2'
+
+services:
+  db:
+    image: mariadb
+    container_name: nextclouddb
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - /home/coen/docker/nextcloud/datadb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+    networks:
+      - default
+
+  app:
+    image: nextcloud
+    container_name: nextcloud
+    restart: unless-stopped
+    ports:
+      - "2237:80"
+    # To access on ip
+    expose:
+      - "2237"
+    links:
+      - db
+    volumes:
+      - /home/coen/docker/nextcloud/data:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+      - NEXTCLOUD_HOSTNAME=cloud.dynadex.dev
+      - NEXTCLOUD_TRUSTED_DOMAIN=cloud.dynadex.dev
+      - TRUSTED_PROXIES=172.22.0.0/24
+    hostname: cloud.dynadex.dev
+    networks:
+      - web
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud-app.entrypoints=http"
+      - "traefik.http.routers.nextcloud-app.rule=Host(\"cloud.dynadex.dev\")"
+      - "traefik.http.middlewares.nextcloud-app-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.nextcloud-app.middlewares=nextcloud-app-https-redirect"
+      - "traefik.http.routers.nextcloud-app-secure.entrypoints=https"
+      - "traefik.http.routers.nextcloud-app-secure.rule=Host(\"cloud.dynadex.dev\")"
+      - "traefik.http.routers.nextcloud-app-secure.tls=true"
+      - "traefik.http.routers.nextcloud-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.nextcloud-app-secure.service=nextcloud-app"
+      - "traefik.http.services.nextcloud-app.loadbalancer.server.port=2237"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.nextcloud-app-secure.middlewares=nextcloud-dav,secHeaders@file"
+      - "traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
+      - "traefik.http.middlewares.nextcloud-dav.replacepathregex.replacement=/remote.php/dav/"
+
+networks:
+  web:
+    external: true
