@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    volumes:
+      - /home/coen/docker/radarr/config:/config
+      - /home/coen/nas/media/films:/films
+      - /home/coen/nas/media/downloads:/downloads
+    # To access on ip
+    ports:
+      - "7878:7878"
+    expose:
+      - "7878"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.dynadex.dev`)"
+      - "traefik.http.routers.radarr.tls=true"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+
+networks:
+  web:
+    external: true
