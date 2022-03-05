@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+  sabnzbd:
+    image: linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    restart: unless-stopped
+    volumes:
+      - /home/coen/docker/sabnzbd/config:/config
+      - /home/coen/nas/media/downloads:/downloads
+      - /home/coen/nas/media/downloads/incomplete:/incomplete
+    # To access on ip
+    ports:
+      - "5683:5683"
+    expose:
+      - "5683"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sabnzbd.rule=Host(\"sabnzbd.dynadex.dev\")"
+      - "traefik.http.routers.sabnzbd.tls=true"
+      - "traefik.http.services.sabnzbd.loadbalancer.server.port=5683"
+
+networks:
+  web:
+    external: true
