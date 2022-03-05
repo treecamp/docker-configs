@@ -1,0 +1,37 @@
+version: "2"
+
+services:
+  unifi:
+    image: jacobalberty/unifi:latest
+    container_name: "unifi"
+    restart: unless-stopped
+    volumes:
+      - /home/coen/docker/unifi/config:/unifi
+    ports:
+      - "3478:3478/udp"
+      - "10001:10001/udp"
+      - "9764:8080/tcp"
+      - "8081:8081/tcp"
+      - "8880:8880/tcp"
+      - "6789:689/tcp"
+      # To access on ip
+      - "8443:8443/tcp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.unifi.rule=Host(\"unifi.dynadex.dev\")"
+      - "traefik.http.routers.unifi.tls=true"
+      - "traefik.http.services.unifi.loadbalancer.server.port=8443"
+      # Label for Unifi only
+      - "traefik.http.services.unifi.loadbalancer.server.scheme=https"
+    # Unifi only
+    hostname: unifi
+
+networks:
+  web:
+    external: true
